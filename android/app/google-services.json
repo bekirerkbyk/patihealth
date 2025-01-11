@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "798873714560",
+    "project_id": "patihealthtest5",
+    "storage_bucket": "patihealthtest5.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:798873714560:android:6fc4403e1dcb966e144b65",
+        "android_client_info": {
+          "package_name": "com.example.patihealthtest5"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD1m3Yi2WUslzUBBYa4C7XtpY4S458nu9s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
