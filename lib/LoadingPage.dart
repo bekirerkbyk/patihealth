@@ -17,7 +17,7 @@ class LoadingPage extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             const Text(
-              'LOADING',
+              'YÜKLENİYOR',
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,

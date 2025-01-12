@@ -30,7 +30,7 @@ class RegisterScreen extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const Text(
-                  "Create Account",
+                  "Hesap Oluştur",
                   style: TextStyle(
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
@@ -51,7 +51,7 @@ class RegisterScreen extends StatelessWidget {
                         TextField(
                           controller: usernameController,
                           decoration: const InputDecoration(
-                            labelText: "Username",
+                            labelText: "Kullanıcı Adı",
                             prefixIcon: Icon(Icons.person),
                           ),
                         ),
@@ -59,7 +59,7 @@ class RegisterScreen extends StatelessWidget {
                         TextField(
                           controller: emailController,
                           decoration: const InputDecoration(
-                            labelText: "Email",
+                            labelText: "E-posta",
                             prefixIcon: Icon(Icons.email),
                           ),
                         ),
@@ -67,7 +67,7 @@ class RegisterScreen extends StatelessWidget {
                         TextField(
                           controller: passwordController,
                           decoration: const InputDecoration(
-                            labelText: "Password",
+                            labelText: "Şifre",
                             prefixIcon: Icon(Icons.lock),
                           ),
                           obscureText: true,
@@ -76,7 +76,7 @@ class RegisterScreen extends StatelessWidget {
                         TextField(
                           controller: confirmPasswordController,
                           decoration: const InputDecoration(
-                            labelText: "Confirm Password",
+                            labelText: "Şifreyi Onayla",
                             prefixIcon: Icon(Icons.lock),
                           ),
                           obscureText: true,
@@ -99,7 +99,7 @@ class RegisterScreen extends StatelessWidget {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
                                       content: Text(
-                                          "Registration failed! Please try again."),
+                                          "Kayıt başarısız! Lütfen tekrar deneyin."),
                                       backgroundColor: Colors.red,
                                     ),
                                   );
@@ -115,7 +115,7 @@ class RegisterScreen extends StatelessWidget {
                                 // Başarılı kayıt mesajı göster
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
-                                    content: Text("Registration Successful!"),
+                                    content: Text("Kayıt Başarılı!"),
                                     backgroundColor: Colors.green,
                                   ),
                                 );
@@ -132,13 +132,11 @@ class RegisterScreen extends StatelessWidget {
                               } on FirebaseAuthException catch (e) {
                                 String errorMessage;
                                 if (e.code == 'email-already-in-use') {
-                                  errorMessage =
-                                      "This email is already in use.";
+                                  errorMessage = "Bu e-posta zaten kullanımda.";
                                 } else if (e.code == 'invalid-email') {
-                                  errorMessage = "Invalid email format.";
+                                  errorMessage = "Geçersiz e-posta formatı.";
                                 } else {
-                                  errorMessage =
-                                      "Registration error: ${e.message}";
+                                  errorMessage = "Kayıt hatası: ${e.message}";
                                 }
 
                                 ScaffoldMessenger.of(context).showSnackBar(
@@ -151,7 +149,7 @@ class RegisterScreen extends StatelessWidget {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
                                     content: Text(
-                                        "Unexpected error: ${e.toString()}"),
+                                        "Beklenmeyen bir hata: ${e.toString()}"),
                                     backgroundColor: Colors.red,
                                   ),
                                 );
@@ -160,7 +158,7 @@ class RegisterScreen extends StatelessWidget {
                               // Şifreler eşleşmiyorsa hata mesajı göster
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                  content: Text("Passwords do not match!"),
+                                  content: Text("Şifreler eşleşmiyor!"),
                                   backgroundColor: Colors.red,
                                 ),
                               );
@@ -175,7 +173,7 @@ class RegisterScreen extends StatelessWidget {
                                 horizontal: 50, vertical: 15),
                           ),
                           child: const Text(
-                            "Register",
+                            "Kaydol",
                             style: TextStyle(fontSize: 18, color: Colors.white),
                           ),
                         ),
@@ -191,6 +189,7 @@ class RegisterScreen extends StatelessWidget {
     );
   }
 }
+
 
 /*import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';

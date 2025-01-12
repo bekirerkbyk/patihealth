@@ -61,12 +61,12 @@ class _PetProfileScreenState extends State<PetProfileScreen> {
         }
 
         final updateData = {
-          'name': _nameController.text,
-          'breed': _breedController.text,
-          'age': _ageController.text,
-          'weight': _weightController.text,
-          'height': _heightController.text,
-          'color': _colorController.text,
+          'isim': _nameController.text,
+          'tür': _breedController.text,
+          'yaş': _ageController.text,
+          'kilo': _weightController.text,
+          'boy': _heightController.text,
+          'rnk': _colorController.text,
         };
 
         if (imageUrl != null) {
@@ -93,12 +93,12 @@ class _PetProfileScreenState extends State<PetProfileScreen> {
                 .collection('pets')
                 .doc(widget.petId)
                 .set({
-              'name': _nameController.text,
-              'breed': _breedController.text,
-              'age': _ageController.text,
-              'weight': _weightController.text,
-              'height': _heightController.text,
-              'color': _colorController.text,
+              'isim': _nameController.text,
+              'tür': _breedController.text,
+              'yaş': _ageController.text,
+              'kilo': _weightController.text,
+              'boy': _heightController.text,
+              'renk': _colorController.text,
             });
           } catch (setError) {
             print('Profil oluşturulurken hata: $setError');
@@ -122,11 +122,11 @@ class _PetProfileScreenState extends State<PetProfileScreen> {
 
         if (petDoc.exists) {
           setState(() {
-            _breedController.text = petDoc.data()?['breed'] ?? 'Border Collie';
-            _ageController.text = petDoc.data()?['age'] ?? '1y 4m 11d';
-            _weightController.text = petDoc.data()?['weight'] ?? '7.5 kg';
-            _heightController.text = petDoc.data()?['height'] ?? '54 cm';
-            _colorController.text = petDoc.data()?['color'] ?? 'Black';
+            _breedController.text = petDoc.data()?['tür'] ?? 'Border Collie';
+            _ageController.text = petDoc.data()?['yaş'] ?? '1y 4m 11d';
+            _weightController.text = petDoc.data()?['kilo'] ?? '7.5 kg';
+            _heightController.text = petDoc.data()?['boy'] ?? '54 cm';
+            _colorController.text = petDoc.data()?['renk'] ?? 'Siyah';
           });
         }
       } catch (e) {
@@ -167,7 +167,8 @@ class _PetProfileScreenState extends State<PetProfileScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Pet Profile', style: TextStyle(color: Colors.white)),
+        title: const Text('Evcil Hayvan Profili',
+            style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.green,
         centerTitle: true,
       ),
@@ -222,7 +223,7 @@ class _PetProfileScreenState extends State<PetProfileScreen> {
                       ),
                     ),
                     child: const Text(
-                      'Add Vaccine',
+                      'Aşı Ekle',
                       style: TextStyle(fontSize: 18),
                     ),
                   ),
@@ -248,7 +249,7 @@ class _PetProfileScreenState extends State<PetProfileScreen> {
         ),
         const SizedBox(height: 16),
         const Text(
-          'About Pet',
+          'Evcil Hayvan Hakkında',
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
@@ -270,10 +271,10 @@ class _PetProfileScreenState extends State<PetProfileScreen> {
             runSpacing: 16,
             alignment: WrapAlignment.center,
             children: [
-              _infoBox('Age', _ageController.text),
-              _infoBox('Weight', _weightController.text),
-              _infoBox('Height', _heightController.text),
-              _infoBox('Color', _colorController.text),
+              _infoBox('Yaş', _ageController.text),
+              _infoBox('Kilo', _weightController.text),
+              _infoBox('Boy', _heightController.text),
+              _infoBox('Renk', _colorController.text),
             ],
           ),
         ),
@@ -299,32 +300,32 @@ class _PetProfileScreenState extends State<PetProfileScreen> {
       children: [
         TextField(
           controller: _nameController,
-          decoration: const InputDecoration(labelText: 'Name'),
+          decoration: const InputDecoration(labelText: 'İsim'),
         ),
         const SizedBox(height: 8),
         TextField(
           controller: _breedController,
-          decoration: const InputDecoration(labelText: 'Breed'),
+          decoration: const InputDecoration(labelText: 'Tür'),
         ),
         const SizedBox(height: 8),
         TextField(
           controller: _ageController,
-          decoration: const InputDecoration(labelText: 'Age'),
+          decoration: const InputDecoration(labelText: 'Yaş'),
         ),
         const SizedBox(height: 8),
         TextField(
           controller: _weightController,
-          decoration: const InputDecoration(labelText: 'Weight'),
+          decoration: const InputDecoration(labelText: 'Kilo'),
         ),
         const SizedBox(height: 8),
         TextField(
           controller: _heightController,
-          decoration: const InputDecoration(labelText: 'Height'),
+          decoration: const InputDecoration(labelText: 'Boy'),
         ),
         const SizedBox(height: 8),
         TextField(
           controller: _colorController,
-          decoration: const InputDecoration(labelText: 'Color'),
+          decoration: const InputDecoration(labelText: 'Renk'),
         ),
         const SizedBox(height: 16),
         ElevatedButton(
@@ -337,7 +338,7 @@ class _PetProfileScreenState extends State<PetProfileScreen> {
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.green,
           ),
-          child: const Text('Save'),
+          child: const Text('Kaydet'),
         ),
       ],
     );
@@ -384,32 +385,32 @@ class _PetProfileScreenState extends State<PetProfileScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Pet\'s Status',
+          'Evcil Hayvan Durumu',
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
         _statusBox(
-          'Health',
+          'Sağlık',
           'Abnormal',
           Icons.favorite,
           Colors.red,
-          actionLabel: 'Contact Vet',
+          actionLabel: 'Veteriner Ara',
         ),
         const SizedBox(height: 8),
         _statusBox(
-          'Food',
-          'Hungry',
+          'Yemek',
+          'Aç',
           Icons.fastfood,
           Colors.orange,
-          actionLabel: 'Check Food',
+          actionLabel: 'Mama kontrolü',
         ),
         const SizedBox(height: 8),
         _statusBox(
-          'Mood',
+          'Mod',
           'Abnormal',
           Icons.sentiment_dissatisfied,
           Colors.blue,
-          actionLabel: 'Whistle',
+          actionLabel: 'Islık çal',
         ),
       ],
     );
@@ -424,7 +425,7 @@ class _PetProfileScreenState extends State<PetProfileScreen> {
       trailing: ElevatedButton(
         onPressed: () {
           switch (title) {
-            case 'Health':
+            case 'Sağlık':
               // Veteriner numaralarını gösteren dialog
               showDialog(
                 context: context,
@@ -456,14 +457,14 @@ class _PetProfileScreenState extends State<PetProfileScreen> {
                 },
               );
               break;
-            case 'Food':
+            case 'Yemek':
               // Shop sayfasına yönlendirme
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => ShopPage()),
               );
               break;
-            case 'Mood':
+            case 'Mod':
               // Ses çalma ve animasyon gösterme
               _playWhistleAndShowAnimation();
               break;

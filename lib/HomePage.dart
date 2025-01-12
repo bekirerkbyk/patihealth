@@ -114,7 +114,7 @@ class _HomePageState extends State<HomePage> {
     if (_pets.length >= 4) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('You can only add up to 4 pets.'),
+          content: Text('Sadece 4 evcil hayvan ekleyebilirsiniz.'),
           duration: Duration(seconds: 2),
         ),
       );
@@ -125,15 +125,15 @@ class _HomePageState extends State<HomePage> {
     final pickedSource = await showDialog<ImageSource>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text("Choose Image Source"),
+        title: const Text("Resim Kaynağı Seçin"),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, ImageSource.camera),
-            child: const Text("Camera"),
+            child: const Text("Kamera"),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, ImageSource.gallery),
-            child: const Text("Gallery"),
+            child: const Text("Galeri"),
           ),
         ],
       ),
@@ -248,7 +248,6 @@ class _HomePageState extends State<HomePage> {
       try {
         String? imageUrl;
         if (image != null) {
-          // Fotoğrafı Firebase Storage'a yükle
           final storageRef = FirebaseStorage.instance
               .ref()
               .child('pet_images/${currentUser.uid}/$petId.jpg');
@@ -256,7 +255,6 @@ class _HomePageState extends State<HomePage> {
           imageUrl = await storageRef.getDownloadURL();
         }
 
-        // Firestore'da güncelle
         await FirebaseFirestore.instance
             .collection('users')
             .doc(currentUser.uid)
@@ -267,7 +265,6 @@ class _HomePageState extends State<HomePage> {
           if (imageUrl != null) 'imageUrl': imageUrl,
         });
 
-        // Yerel state'i güncelle
         setState(() {
           final petIndex = _pets.indexWhere((pet) => pet.id == petId);
           if (petIndex != -1) {
@@ -383,56 +380,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  String _formatLastActivity(DateTime dateTime) {
-    final difference = DateTime.now().difference(dateTime);
-    if (difference.inMinutes < 60) {
-      return '${difference.inMinutes}d önce';
-    } else if (difference.inHours < 24) {
-      return '${difference.inHours}s önce';
-    } else {
-      return '${difference.inDays}g önce';
-    }
-  }
-
-  Widget _buildQuickAccessCard({
-    required IconData icon,
-    required String title,
-    required VoidCallback onTap,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0),
-      child: InkWell(
-        onTap: onTap,
-        child: Container(
-          width: 80,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(15),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withOpacity(0.2),
-                spreadRadius: 1,
-                blurRadius: 5,
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, color: Colors.green, size: 30),
-              const SizedBox(height: 8),
-              Text(
-                title,
-                style: const TextStyle(fontSize: 12),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildMenuButton(String label, IconData icon, Color color) {
     return Column(
       children: [
@@ -454,6 +401,339 @@ class _HomePageState extends State<HomePage> {
         const SizedBox(height: 8),
         Text(label, style: const TextStyle(fontSize: 12)),
       ],
+    );
+  }
+
+  void _showVeterinarianInfo() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) => AlertDialog(
+        title: const Text("Veteriner Bilgileri"),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text("Veteriner Adı: Dr. Mehmet Öz"),
+            SizedBox(height: 8),
+            Text("Telefon Numarası: +90 555 123 4567"),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Kapat"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showCareList() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) => AlertDialog(
+        title: const Text("Bakım Listesi"),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text("1. Tüy Bakımı"),
+            Text("2. Düzenli Egzersiz"),
+            Text("3. Aşı Takibi"),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Kapat"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showNutritionSuggestions() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) => AlertDialog(
+        title: const Text("Beslenme Önerileri"),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text("1. Yüksek proteinli mama."),
+            Text("2. Taze sebze ve meyveler."),
+            Text("3. Bol su tüketimi."),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Kapat"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEventCalendar() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => Scaffold(
+          appBar: AppBar(
+            title: const Text("Etkinlikler"),
+            backgroundColor: Colors.green,
+          ),
+          body: Center(
+            child: CalendarDatePicker(
+              initialDate: DateTime.now(),
+              firstDate: DateTime(2020),
+              lastDate: DateTime(2030),
+              onDateChanged: (date) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content:
+                        Text('Seçilen Tarih: ${date.toString().split(' ')[0]}'),
+                  ),
+                );
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.green,
+        title: FutureBuilder<String?>(
+          future: _fetchUsername(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Text('yükleniyor...');
+            } else if (snapshot.hasError || !snapshot.hasData) {
+              return const Text('Hoşgeldin!');
+            } else {
+              return Text('Hoşgeldin ${snapshot.data ?? 'User'}');
+            }
+          },
+        ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 16),
+            child: GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ProfilePage()),
+                );
+              },
+              child: FutureBuilder<String?>(
+                future: _fetchProfileImage(),
+                builder: (context, snapshot) {
+                  if (snapshot.hasData && snapshot.data != null) {
+                    return CircleAvatar(
+                      backgroundImage: NetworkImage(snapshot.data!),
+                      backgroundColor: Colors.white.withOpacity(0.9),
+                    );
+                  }
+                  return CircleAvatar(
+                    backgroundColor: Colors.white.withOpacity(0.9),
+                    child: const Icon(Icons.person, color: Colors.black54),
+                  );
+                },
+              ),
+            ),
+          ),
+        ],
+      ),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  GestureDetector(
+                    onTap: _showVeterinarianInfo,
+                    child: _buildMenuButton(
+                        'Veteriner', Icons.medical_services, Colors.green),
+                  ),
+                  GestureDetector(
+                    onTap: _showCareList,
+                    child: _buildMenuButton('Bakım', Icons.pets, Colors.green),
+                  ),
+                  GestureDetector(
+                    onTap: _showNutritionSuggestions,
+                    child: _buildMenuButton(
+                        'Beslenme', Icons.restaurant, Colors.green),
+                  ),
+                  GestureDetector(
+                    onTap: _showEventCalendar,
+                    child: _buildMenuButton(
+                        'Etkinlikler', Icons.calendar_today, Colors.green),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+                decoration: BoxDecoration(
+                  color: Colors.green,
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _buildStatItem(
+                      icon: Icons.pets,
+                      value: _pets.length.toString(),
+                      label: 'Toplam Pet',
+                    ),
+                    _buildStatItem(
+                      icon: Icons.sentiment_satisfied,
+                      value:
+                          _pets.where((pet) => pet.isActive).length.toString(),
+                      label: 'Aktif Pet',
+                    ),
+                    _buildStatItem(
+                      icon: Icons.assignment,
+                      value: _pets.length.toString(),
+                      label: 'Görevler',
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Evcil Hayvanlarım',
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.add_circle, color: Colors.green),
+                    onPressed: _addPet,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.45,
+                child: GridView.builder(
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 10,
+                    mainAxisSpacing: 10,
+                    childAspectRatio: 1.1,
+                  ),
+                  itemCount: _pets.length,
+                  itemBuilder: (context, index) {
+                    final pet = _pets[index];
+                    return _buildPetCard(pet);
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 10,
+              offset: const Offset(0, -5),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.8),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(20)),
+              ),
+              child: BottomNavigationBar(
+                elevation: 0,
+                backgroundColor: Colors.transparent,
+                type: BottomNavigationBarType.fixed,
+                items: [
+                  BottomNavigationBarItem(
+                    icon: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.green.withOpacity(0.1),
+                      ),
+                      child: const Icon(Icons.home),
+                    ),
+                    label: "Home",
+                  ),
+                  BottomNavigationBarItem(
+                    icon: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.green.withOpacity(0.1),
+                      ),
+                      child: const Icon(Icons.chat),
+                    ),
+                    label: "Chat",
+                  ),
+                  BottomNavigationBarItem(
+                    icon: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.green.withOpacity(0.1),
+                      ),
+                      child: const Icon(Icons.map),
+                    ),
+                    label: "Harita",
+                  ),
+                  BottomNavigationBarItem(
+                    icon: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.green.withOpacity(0.1),
+                      ),
+                      child: const Icon(Icons.shopping_cart),
+                    ),
+                    label: "Mağaza",
+                  ),
+                  BottomNavigationBarItem(
+                    icon: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.green.withOpacity(0.1),
+                      ),
+                      child: const Icon(Icons.person),
+                    ),
+                    label: "Profil",
+                  ),
+                ],
+                selectedItemColor: Colors.green,
+                unselectedItemColor: Colors.grey,
+                onTap: (index) {
+                  _navigateToPage(context, index);
+                },
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -540,235 +820,6 @@ class _HomePageState extends State<HomePage> {
               style: TextStyle(fontSize: 10, color: Colors.grey),
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.green,
-        title: FutureBuilder<String?>(
-          future: _fetchUsername(),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Text('Loading...');
-            } else if (snapshot.hasError || !snapshot.hasData) {
-              return const Text('Welcome!');
-            } else {
-              return Text('Hello ${snapshot.data ?? 'User'}, Welcome!!!');
-            }
-          },
-        ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16),
-            child: GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const ProfilePage()),
-                );
-              },
-              child: FutureBuilder<String?>(
-                future: _fetchProfileImage(),
-                builder: (context, snapshot) {
-                  if (snapshot.hasData && snapshot.data != null) {
-                    return CircleAvatar(
-                      backgroundImage: NetworkImage(snapshot.data!),
-                      backgroundColor: Colors.white.withOpacity(0.9),
-                    );
-                  }
-                  return CircleAvatar(
-                    backgroundColor: Colors.white.withOpacity(0.9),
-                    child: const Icon(Icons.person, color: Colors.black54),
-                  );
-                },
-              ),
-            ),
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            children: [
-              // Üst menü butonları
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _buildMenuButton(
-                      'Veteriner', Icons.medical_services, Colors.green),
-                  _buildMenuButton('Bakım', Icons.pets, Colors.green),
-                  _buildMenuButton('Beslenme', Icons.restaurant, Colors.green),
-                  _buildMenuButton(
-                      'Etkinlikler', Icons.calendar_today, Colors.green),
-                ],
-              ),
-              const SizedBox(height: 20),
-
-              // İstatistik kartı
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
-                decoration: BoxDecoration(
-                  color: Colors.green,
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _buildStatItem(
-                      icon: Icons.pets,
-                      value: _pets.length.toString(),
-                      label: 'Toplam Pet',
-                    ),
-                    _buildStatItem(
-                      icon: Icons.sentiment_satisfied,
-                      value:
-                          _pets.where((pet) => pet.isActive).length.toString(),
-                      label: 'Aktif Pet',
-                    ),
-                    _buildStatItem(
-                      icon: Icons.assignment,
-                      value: _pets.length.toString(),
-                      label: 'Görevler',
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              // My Pets başlığı
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'My Pets',
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.add_circle, color: Colors.green),
-                    onPressed: _addPet,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-
-              // Pet listesi
-              SizedBox(
-                height: MediaQuery.of(context).size.height * 0.45,
-                child: GridView.builder(
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 10,
-                    mainAxisSpacing: 10,
-                    childAspectRatio: 1.1,
-                  ),
-                  itemCount: _pets.length,
-                  itemBuilder: (context, index) {
-                    final pet = _pets[index];
-                    return _buildPetCard(pet);
-                  },
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 10,
-              offset: const Offset(0, -5),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.8),
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(20)),
-              ),
-              child: BottomNavigationBar(
-                elevation: 0,
-                backgroundColor: Colors.transparent,
-                type: BottomNavigationBarType.fixed,
-                items: [
-                  BottomNavigationBarItem(
-                    icon: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.green.withOpacity(0.1),
-                      ),
-                      child: const Icon(Icons.home),
-                    ),
-                    label: "Home",
-                  ),
-                  BottomNavigationBarItem(
-                    icon: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.green.withOpacity(0.1),
-                      ),
-                      child: const Icon(Icons.chat),
-                    ),
-                    label: "Chat",
-                  ),
-                  BottomNavigationBarItem(
-                    icon: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.green.withOpacity(0.1),
-                      ),
-                      child: const Icon(Icons.map),
-                    ),
-                    label: "Map",
-                  ),
-                  BottomNavigationBarItem(
-                    icon: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.green.withOpacity(0.1),
-                      ),
-                      child: const Icon(Icons.shopping_cart),
-                    ),
-                    label: "Shop",
-                  ),
-                  BottomNavigationBarItem(
-                    icon: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.green.withOpacity(0.1),
-                      ),
-                      child: const Icon(Icons.person),
-                    ),
-                    label: "Profile",
-                  ),
-                ],
-                selectedItemColor: Colors.green,
-                unselectedItemColor: Colors.grey,
-                onTap: (index) {
-                  _navigateToPage(context, index);
-                },
-              ),
-            ),
-          ),
         ),
       ),
     );

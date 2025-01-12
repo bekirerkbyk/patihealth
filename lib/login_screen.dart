@@ -71,7 +71,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   const Text(
-                    "Welcome Back!",
+                    "Tekrar Hoş Geldiniz!",
                     style: TextStyle(
                       fontSize: 32,
                       fontWeight: FontWeight.bold,
@@ -80,7 +80,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 20),
                   const Text(
-                    "Login to your account",
+                    "Hesabınıza giriş yapın",
                     style: TextStyle(
                       fontSize: 18,
                       color: Colors.white70,
@@ -92,7 +92,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     decoration: InputDecoration(
                       filled: true,
                       fillColor: Colors.white,
-                      hintText: "Email",
+                      hintText: "E-posta",
                       prefixIcon: const Icon(Icons.email, color: Colors.grey),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(30),
@@ -107,7 +107,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     decoration: InputDecoration(
                       filled: true,
                       fillColor: Colors.white,
-                      hintText: "Password",
+                      hintText: "Şifre",
                       prefixIcon: const Icon(Icons.lock, color: Colors.grey),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(30),
@@ -128,7 +128,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         },
                       ),
                       const Text(
-                        "Remember Me",
+                        "Beni Hatırla",
                         style: TextStyle(color: Colors.white),
                       ),
                     ],
@@ -173,13 +173,14 @@ class _LoginScreenState extends State<LoginScreen> {
                         // Hata mesajlarını göster
                         String errorMessage;
                         if (e.code == 'user-not-found') {
-                          errorMessage = "No user found with this email.";
+                          errorMessage =
+                              "Bu e-posta ile kayıtlı kullanıcı bulunamadı.";
                         } else if (e.code == 'wrong-password') {
-                          errorMessage = "Incorrect password.";
+                          errorMessage = "Yanlış şifre girdiniz.";
                         } else if (e.code == 'invalid-email') {
-                          errorMessage = "Invalid email format.";
+                          errorMessage = "Geçersiz e-posta formatı.";
                         } else {
-                          errorMessage = "An unexpected error occurred.";
+                          errorMessage = "Beklenmeyen bir hata oluştu.";
                         }
 
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -193,7 +194,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content:
-                                Text("An error occurred. Please try again."),
+                                Text("Bir hata oluştu. Lütfen tekrar deneyin."),
                             backgroundColor: Colors.red,
                           ),
                         );
@@ -208,7 +209,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           horizontal: 50, vertical: 15),
                     ),
                     child: const Text(
-                      "Login",
+                      "Giriş Yap",
                       style: TextStyle(fontSize: 18, color: Colors.white),
                     ),
                   ),
@@ -222,7 +223,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       );
                     },
                     child: const Text(
-                      "If you don't have an account, please register",
+                      "Hesabınız yoksa, lütfen kaydolun",
                       style: TextStyle(color: Colors.white),
                     ),
                   ),

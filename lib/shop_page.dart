@@ -13,62 +13,26 @@ class _ShopPageState extends State<ShopPage> {
   final List<CartItem> cartItems = [];
 
   final List<Map<String, String>> products = [
-    /*{
-      "name": "Ferrari 458 Italia",
-      "price": "\$250.000",
-      "imageUrl":
-          "https://upload.wikimedia.org/wikipedia/commons/thumb/5/59/0_488_GTB.jpg/420px-0_488_GTB.jpg"
-    },
     {
-      "name": "Nike Mercurial Zoom Superfly 9 Elite (pink)",
-      "price": "\$100",
-      "imageUrl":
-          "https://0990b9.a-cdn.akinoncloud.com/products/2023/05/27/457185/48db84c0-e676-41d2-a52f-0beeb67e9c23_size3840x3840_cropCenter.jpg"
-    },
-    {
-      "name": "Bicycle Dragon Blue ",
-      "price": "\$25",
-      "imageUrl":
-          "https://encrypted-tbn0.gstatic.com/shopping?q=tbn:ANd9GcQDzNZ2HQ2b31I6PRMsx-SWcnVW014yJcED-QmVWQpd0FmEYbOoSxFEeq4oLQwP_JZuLWbPUN6-QGHQ8hw23zjjGBxiqt925B4CQbVmbgvUST7_EKqP72v6Qw&usqp=CAE"
-    },
-    {
-      "name": "Victor Osimhen",
-      "price": "\$100.000.000",
-      "imageUrl":
-          "https://liderhabercomtr.teimg.com/crop/1280x720/liderhaber-com-tr/uploads/2024/10/osimhen-1.jpg"
-    },
-    {
-      "name": "Galatasaray Island",
-      "price": "\$100.000.000",
-      "imageUrl":
-          "https://foto.haberler.com/haber/2024/10/10/galatasaray-adasi-satilacak-mi-galatasaray-adasi-17916149_7544_amp.jpg"
-    },
-    {
-      "name": "Hyundai Accent Era",
-      "price": "\$1000",
-      "imageUrl":
-          "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTb8lxQqihHpCbg-p0s2-VcCCBx81DKmWydKA&s"
-    },*/
-    {
-      "name": "LaMito Adult Cat 15 Kg",
+      "name": "LaMito Yetişkin Kedi Maması 15 Kg",
       "price": "\$40",
       "imageUrl":
           "https://www.temizmama.com/assets/img/urun/51/u-mito-tavuklu-balikli-yetiskin-kedi-mamasi.webp"
     },
     {
-      "name": "Wunder Food Cat Food Beef 15kg",
+      "name": "Wunder Food Kedi Maması Sığır Etli 15kg",
       "price": "\$50.32",
       "imageUrl":
           "https://encrypted-tbn3.gstatic.com/shopping?q=tbn:ANd9GcS0OwPVhU-OvtlTGjVEypn2WBWzM6rgmwVwHrArP_MSaEUkMSefGWXK7OJ6CKhuUifcJ8a-1wjEyqmrHYjgXN30yenxPz9RVgMW1urSULPkLFRtfzi266Sy&usqp=CAE"
     },
     {
-      "name": "Trendline 15 Kg Adult Dog Food with Beef",
+      "name": "Trendline Sığır Etli Yetişkin Köpek Maması 15 Kg",
       "price": "\$20",
       "imageUrl":
           "https://encrypted-tbn1.gstatic.com/shopping?q=tbn:ANd9GcTxtN3iLtPKU2DZxBNwaki14Jl-tUUHVDfwRBeW0tzMxdpNEj6D-i2ujHuDVlxO_sFxCmvG2-C2_my7Gy0WlGygn8IAscjUBlYex8K7CJKPyL9zDGnB1LNdMA&usqp=CAE"
     },
     {
-      "name": "Gardenmix Platinum Honey Budgie Bird Food, 1 kg",
+      "name": "Gardenmix Bal Arılı Muhabbet Kuşu Yemi 1 kg",
       "price": "\$5.75",
       "imageUrl":
           "https://m.media-amazon.com/images/I/814yl+nJ0cL._AC_SY879_.jpg"
@@ -105,7 +69,7 @@ class _ShopPageState extends State<ShopPage> {
         backgroundColor: Colors.white,
         elevation: 1,
         title: const Text(
-          "Shop",
+          "Mağaza",
           style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
@@ -236,7 +200,7 @@ class _ShopPageState extends State<ShopPage> {
   }
 }
 
-// Product Detail Page
+// Ürün Detay Sayfası
 class ProductDetailPage extends StatelessWidget {
   final Map<String, String> product;
 
@@ -279,7 +243,7 @@ class ProductDetailPage extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             const Text(
-              "Product Description: \nLorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+              "Ürün Açıklaması: \nAçıklama.",
               style: TextStyle(fontSize: 16),
             ),
           ],
