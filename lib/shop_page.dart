@@ -3,7 +3,7 @@ import 'models/cart_item.dart';
 import 'cart_page.dart';
 
 class ShopPage extends StatefulWidget {
-  ShopPage({super.key});
+  const ShopPage({super.key});
 
   @override
   State<ShopPage> createState() => _ShopPageState();

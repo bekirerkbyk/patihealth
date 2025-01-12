@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 void main() {
-  runApp(ChatGPTApp());
+  runApp(const ChatGPTApp());
 }
 
 class ChatGPTApp extends StatelessWidget {
@@ -11,7 +11,7 @@ class ChatGPTApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return const MaterialApp(
       debugShowCheckedModeBanner: false,
       home: ChatScreen(),
     );
@@ -31,9 +31,9 @@ class _ChatScreenState extends State<ChatScreen> {
 
   // Hugging Face API için HTTP isteği yapan fonksiyon
   Future<String> fetchHuggingFaceResponse(String userMessage) async {
-    final apiUrl =
+    const apiUrl =
         "https://api-inference.huggingface.co/models/facebook/blenderbot-400M-distill"; // Model endpoint //https://api-inference.huggingface.co/models/gpt2
-    final apiKey = "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";
+    const apiKey = "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";
 
     final response = await http.post(
       Uri.parse(apiUrl),
@@ -90,7 +90,7 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Color(0xFF4CAF50),
+        backgroundColor: const Color(0xFF4CAF50),
         title: const Text("PatiHealth Chat"),
         centerTitle: true,
       ),

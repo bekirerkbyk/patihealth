@@ -1,5 +1,20 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:table_calendar/table_calendar.dart';
+
+class VaccineEvent {
+  final String name;
+  final String note;
+  final DateTime date;
+
+  VaccineEvent({
+    required this.name,
+    required this.note,
+    required this.date,
+  });
+}
 
 class VaccineCalendarScreen extends StatefulWidget {
   const VaccineCalendarScreen({super.key});
@@ -9,62 +24,190 @@ class VaccineCalendarScreen extends StatefulWidget {
 }
 
 class _VaccineCalendarScreenState extends State<VaccineCalendarScreen> {
-  DateTime _selectedDate = DateTime.now();
-  final List<Map<String, dynamic>> _vaccineEntries = [];
+  final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
 
-  void _addVaccineEntry(String note, String time) {
-    setState(() {
-      _vaccineEntries.add({
-        'date': _selectedDate,
-        'note': note,
-        'time': time,
-      });
+  final List<int> _timeOptions = [5, 60, 3600];
+  final List<String> _unitOptions = ['5 Seconds', '1 Minute', '1 Hour'];
+
+  int _selectedTime = 5;
+  String _selectedUnit = '5 Seconds';
+  Timer? _timer;
+
+  CalendarFormat _calendarFormat = CalendarFormat.month;
+  DateTime _focusedDay = DateTime.now();
+  DateTime? _selectedDay;
+  final Map<DateTime, List<VaccineEvent>> _events = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeNotifications();
+    _requestNotificationPermission();
+  }
+
+  void _initializeNotifications() async {
+    const AndroidInitializationSettings initializationSettingsAndroid =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
+
+    const InitializationSettings initializationSettings =
+        InitializationSettings(android: initializationSettingsAndroid);
+
+    await _flutterLocalNotificationsPlugin.initialize(initializationSettings);
+  }
+
+  Future<void> _requestNotificationPermission() async {
+    final status = await Permission.notification.status;
+    if (status.isDenied || status.isPermanentlyDenied) {
+      final result = await Permission.notification.request();
+      if (!result.isGranted) {
+        _showSnackBar('Please enable notification permissions in settings.');
+      }
+    }
+  }
+
+  int _calculateDuration() {
+    switch (_selectedUnit) {
+      case '5 Seconds':
+        return 5;
+      case '1 Minute':
+        return 60;
+      case '1 Hour':
+        return 3600;
+      default:
+        return 5;
+    }
+  }
+
+  void _scheduleNotification() {
+    _cancelNotification();
+
+    if (_selectedTime <= 0 || _selectedUnit.isEmpty) {
+      _showSnackBar('Please select a valid time and unit.');
+      return;
+    }
+
+    final durationInSeconds = _calculateDuration();
+    _showSnackBar(
+        'Notification scheduled every $_selectedTime $_selectedUnit.');
+
+    _timer = Timer.periodic(Duration(seconds: durationInSeconds), (timer) {
+      _showNotification();
     });
   }
 
-  Future<void> _showAddVaccineDialog() async {
-    final noteController = TextEditingController();
-    final timeController = TextEditingController();
+  Future<void> _showNotification() async {
+    const AndroidNotificationDetails androidPlatformChannelSpecifics =
+        AndroidNotificationDetails(
+      'vaccine_notification_channel',
+      'Vaccine Reminder',
+      channelDescription: 'Reminders for pet vaccines.',
+      importance: Importance.high,
+      priority: Priority.high,
+    );
 
-    return showDialog<void>(
+    const NotificationDetails notificationDetails =
+        NotificationDetails(android: androidPlatformChannelSpecifics);
+
+    await _flutterLocalNotificationsPlugin.show(
+      0,
+      'Vaccine Reminder!',
+      'Time to check your pet\'s vaccine schedule!',
+      notificationDetails,
+    );
+  }
+
+  void _cancelNotification() {
+    if (_timer != null) {
+      _timer!.cancel();
+      _showSnackBar('Scheduled notifications canceled.');
+    }
+  }
+
+  void _confirmCancelNotification() {
+    showDialog(
       context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Cancel Notifications'),
+          content:
+              const Text('Do you want to cancel all scheduled notifications?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('No'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _cancelNotification();
+              },
+              child: const Text('Yes'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _showAddVaccineDialog(DateTime selectedDate) {
+    final nameController = TextEditingController();
+    final noteController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) {
         return AlertDialog(
           title: const Text('Add Vaccine'),
-          content: SingleChildScrollView(
-            child: ListBody(
-              children: <Widget>[
-                TextField(
-                  controller: noteController,
-                  decoration: const InputDecoration(
-                    labelText: 'Note',
-                  ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                decoration: const InputDecoration(
+                  labelText: 'Vaccine Name',
                 ),
-                TextField(
-                  controller: timeController,
-                  decoration: const InputDecoration(
-                    labelText: 'Time (e.g., 10:00 AM)',
-                  ),
-                ),
-              ],
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('Cancel'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            ElevatedButton(
-              onPressed: () {
-                _addVaccineEntry(noteController.text, timeController.text);
-                Navigator.of(context).pop();
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
               ),
+              TextField(
+                controller: noteController,
+                decoration: const InputDecoration(
+                  labelText: 'Notes',
+                ),
+                maxLines: 3,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  final event = VaccineEvent(
+                    name: nameController.text,
+                    note: noteController.text,
+                    date: selectedDate,
+                  );
+
+                  if (_events[selectedDate] == null) {
+                    _events[selectedDate] = [event];
+                  } else {
+                    _events[selectedDate]!.add(event);
+                  }
+                });
+                Navigator.pop(context);
+              },
               child: const Text('Add'),
             ),
           ],
@@ -73,111 +216,142 @@ class _VaccineCalendarScreenState extends State<VaccineCalendarScreen> {
     );
   }
 
+  List<VaccineEvent> _getEventsForDay(DateTime day) {
+    return _events[day] ?? [];
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Book Appointment',
-          style: TextStyle(color: Colors.white),
-        ),
+        title: const Text('Vaccine Calendar'),
         backgroundColor: Colors.green,
         centerTitle: true,
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        selectedItemColor: Colors.green,
-        unselectedItemColor: Colors.grey,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.explore), label: 'Explore'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.manage_accounts), label: 'Manage'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-        ],
-      ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: TableCalendar(
-              firstDay: DateTime(2020),
-              lastDay: DateTime(2030),
-              focusedDay: _selectedDate,
-              selectedDayPredicate: (day) => isSameDay(day, _selectedDate),
-              onDaySelected: (selectedDay, focusedDay) {
-                setState(() {
-                  _selectedDate = selectedDay;
-                });
-              },
-              calendarStyle: CalendarStyle(
-                todayDecoration: BoxDecoration(
-                  color: Colors.green.withOpacity(0.5),
-                  shape: BoxShape.circle,
-                ),
-                selectedDecoration: const BoxDecoration(
-                  color: Colors.green,
-                  shape: BoxShape.circle,
-                ),
-                outsideDaysVisible: false,
-              ),
-              headerStyle: const HeaderStyle(
-                titleCentered: true,
-                formatButtonVisible: false,
-                titleTextStyle: TextStyle(
-                  color: Colors.green,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-                leftChevronIcon: Icon(Icons.chevron_left, color: Colors.green),
-                rightChevronIcon:
-                    Icon(Icons.chevron_right, color: Colors.green),
-              ),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: _showAddVaccineDialog,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green,
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-            ),
-            child: const Text('Add Vaccine Entry'),
-          ),
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: _vaccineEntries.length,
-              itemBuilder: (context, index) {
-                final entry = _vaccineEntries[index];
-                return Card(
-                  child: ListTile(
-                    title: Text(
-                      'Vaccine Date: ${entry['date'].toLocal()}'.split(' ')[0],
-                      style: const TextStyle(fontSize: 18),
+      body: Container(
+        color: Colors.green[50],
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            children: [
+              Card(
+                elevation: 4,
+                child: TableCalendar(
+                  firstDay: DateTime.utc(2024, 1, 1),
+                  lastDay: DateTime.utc(2025, 12, 31),
+                  focusedDay: _focusedDay,
+                  calendarFormat: _calendarFormat,
+                  selectedDayPredicate: (day) {
+                    return isSameDay(_selectedDay, day);
+                  },
+                  onDaySelected: (selectedDay, focusedDay) {
+                    setState(() {
+                      _selectedDay = selectedDay;
+                      _focusedDay = focusedDay;
+                    });
+                    _showAddVaccineDialog(selectedDay);
+                  },
+                  eventLoader: _getEventsForDay,
+                  calendarStyle: CalendarStyle(
+                    markerDecoration: const BoxDecoration(
+                      color: Colors.green,
+                      shape: BoxShape.circle,
                     ),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Note: ${entry['note']}'),
-                        Text('Time: ${entry['time']}'),
-                      ],
+                    todayDecoration: BoxDecoration(
+                      color: Colors.green.withOpacity(0.5),
+                      shape: BoxShape.circle,
                     ),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.delete, color: Colors.red),
-                      onPressed: () {
-                        setState(() {
-                          _vaccineEntries.removeAt(index);
-                        });
-                      },
+                    selectedDecoration: const BoxDecoration(
+                      color: Colors.green,
+                      shape: BoxShape.circle,
                     ),
                   ),
-                );
-              },
-            ),
+                  onFormatChanged: (format) {
+                    setState(() {
+                      _calendarFormat = format;
+                    });
+                  },
+                ),
+              ),
+              const SizedBox(height: 20),
+              if (_selectedDay != null &&
+                  _getEventsForDay(_selectedDay!).isNotEmpty)
+                Expanded(
+                  child: Card(
+                    child: ListView(
+                      children: _getEventsForDay(_selectedDay!).map((event) {
+                        return ListTile(
+                          title: Text(event.name),
+                          subtitle: Text(event.note),
+                          leading: const Icon(Icons.medical_services,
+                              color: Colors.green),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ),
+              ElevatedButton(
+                onPressed: _scheduleNotification,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                ),
+                child: const Text(
+                  'Schedule Notifications',
+                  style: TextStyle(fontSize: 16),
+                ),
+              ),
+              const SizedBox(height: 10),
+              OutlinedButton(
+                onPressed: _confirmCancelNotification,
+                style: OutlinedButton.styleFrom(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                ),
+                child: const Text(
+                  'Cancel Notifications',
+                  style: TextStyle(fontSize: 16),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  DropdownButton<String>(
+                    value: _selectedUnit,
+                    items: _unitOptions.map((unit) {
+                      return DropdownMenuItem<String>(
+                        value: unit,
+                        child: Text(unit),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedUnit = value!;
+                      });
+                    },
+                  ),
+                  const SizedBox(width: 20),
+                  DropdownButton<int>(
+                    value: _selectedTime,
+                    items: _timeOptions.map((time) {
+                      return DropdownMenuItem<int>(
+                        value: time,
+                        child: Text('$time'),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedTime = value!;
+                      });
+                    },
+                  ),
+                ],
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

@@ -4,7 +4,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:dio/dio.dart';
 
 class MapPage extends StatefulWidget {
-  const MapPage({Key? key}) : super(key: key);
+  const MapPage({super.key});
 
   @override
   _MapPageState createState() => _MapPageState();

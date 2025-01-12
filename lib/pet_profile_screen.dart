@@ -7,11 +7,15 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'vaccine_calendar_table.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'shop_page.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class PetProfileScreen extends StatefulWidget {
   final String petName;
   final String petId;
   final File? petImage;
+  final String? imageUrl;
   final bool isNewPet;
   final void Function(String petName, File? image) onSave;
   final void Function() onDelete;
@@ -20,7 +24,8 @@ class PetProfileScreen extends StatefulWidget {
     super.key,
     required this.petName,
     required this.petId,
-    required this.petImage,
+    this.petImage,
+    this.imageUrl,
     required this.isNewPet,
     required this.onSave,
     required this.onDelete,
@@ -31,9 +36,6 @@ class PetProfileScreen extends StatefulWidget {
 }
 
 class _PetProfileScreenState extends State<PetProfileScreen> {
-  final TextEditingController _messageController = TextEditingController();
-  final List<Map<String, String>> _messages = [];
-
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _breedController = TextEditingController();
   final TextEditingController _ageController = TextEditingController();
@@ -46,43 +48,101 @@ class _PetProfileScreenState extends State<PetProfileScreen> {
 
   // Veriyi saklayan fonksiyon
   Future<void> saveProfileData() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('name', _nameController.text);
-    await prefs.setString('breed', _breedController.text);
-    await prefs.setString('age', _ageController.text);
-    await prefs.setString('weight', _weightController.text);
-    await prefs.setString('height', _heightController.text);
-    await prefs.setString('color', _colorController.text);
-    if (_image != null) {
-      await prefs.setString('${widget.petId}_imagePath',
-          _image!.path); // Pet'e özel ID ile kaydediyoruz
+    User? currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser != null) {
+      try {
+        String? imageUrl;
+        if (_image != null) {
+          final storageRef = FirebaseStorage.instance
+              .ref()
+              .child('pet_images/${currentUser.uid}/${widget.petId}.jpg');
+          await storageRef.putFile(_image!);
+          imageUrl = await storageRef.getDownloadURL();
+        }
+
+        final updateData = {
+          'name': _nameController.text,
+          'breed': _breedController.text,
+          'age': _ageController.text,
+          'weight': _weightController.text,
+          'height': _heightController.text,
+          'color': _colorController.text,
+        };
+
+        if (imageUrl != null) {
+          updateData['imageUrl'] = imageUrl;
+        }
+
+        // Firestore'a kaydet
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(currentUser.uid)
+            .collection('pets')
+            .doc(widget.petId)
+            .update(updateData);
+
+        widget.onSave(_nameController.text, _image);
+      } catch (e) {
+        print('Profil kaydedilirken hata: $e');
+        // Eğer döküman yoksa, set ile oluştur
+        if (e is FirebaseException && e.code == 'not-found') {
+          try {
+            await FirebaseFirestore.instance
+                .collection('users')
+                .doc(currentUser.uid)
+                .collection('pets')
+                .doc(widget.petId)
+                .set({
+              'name': _nameController.text,
+              'breed': _breedController.text,
+              'age': _ageController.text,
+              'weight': _weightController.text,
+              'height': _heightController.text,
+              'color': _colorController.text,
+            });
+          } catch (setError) {
+            print('Profil oluşturulurken hata: $setError');
+          }
+        }
+      }
     }
   }
 
   // Veriyi yükleyen fonksiyon
   Future<void> loadProfileData() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _nameController.text = widget.petName;
-      _breedController.text = prefs.getString('breed') ?? 'Border Collie';
-      _ageController.text = prefs.getString('age') ?? '1y 4m 11d';
-      _weightController.text = prefs.getString('weight') ?? '7.5 kg';
-      _heightController.text = prefs.getString('height') ?? '54 cm';
-      _colorController.text = prefs.getString('color') ?? 'Black';
-      String? imagePath = prefs.getString(
-          '${widget.petId}_imagePath'); // Pet'e özel ID ile fotoğraf yolu alınıyor
-      if (imagePath != null && File(imagePath).existsSync()) {
-        _image = File(imagePath);
-      } else {
-        _image = widget.petImage; // Load the image passed from the HomePage
+    User? currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser != null) {
+      try {
+        final petDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(currentUser.uid)
+            .collection('pets')
+            .doc(widget.petId)
+            .get();
+
+        if (petDoc.exists) {
+          setState(() {
+            _breedController.text = petDoc.data()?['breed'] ?? 'Border Collie';
+            _ageController.text = petDoc.data()?['age'] ?? '1y 4m 11d';
+            _weightController.text = petDoc.data()?['weight'] ?? '7.5 kg';
+            _heightController.text = petDoc.data()?['height'] ?? '54 cm';
+            _colorController.text = petDoc.data()?['color'] ?? 'Black';
+          });
+        }
+      } catch (e) {
+        print('Profil yüklenirken hata: $e');
       }
-    });
+    }
   }
 
   @override
   void initState() {
     super.initState();
-    loadProfileData(); // Uygulama başlatıldığında veriyi yükle
+    setState(() {
+      _image = widget.petImage;
+      _nameController.text = widget.petName;
+    });
+    loadProfileData();
   }
 
   @override
@@ -103,44 +163,6 @@ class _PetProfileScreenState extends State<PetProfileScreen> {
     }
   }
 
-  Future<void> _sendMessage(String message) async {
-    setState(() {
-      _messages.add({'sender': 'user', 'text': message});
-    });
-
-    var url = Uri.parse('https://api.openai.com/v1/chat/completions');
-
-    var response = await http.post(
-      url,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer YOUR_API_KEY',
-      },
-      body: json.encode({
-        'model': 'gpt-3.5-turbo',
-        'messages': [
-          {'role': 'system', 'content': 'You are a helpful assistant.'},
-          {'role': 'user', 'content': message},
-        ],
-      }),
-    );
-
-    if (response.statusCode == 200) {
-      var responseBody = json.decode(response.body);
-      setState(() {
-        _messages.add({
-          'sender': 'bot',
-          'text': responseBody['choices'][0]['message']['content']
-        });
-      });
-    } else {
-      setState(() {
-        _messages
-            .add({'sender': 'bot', 'text': 'Sorry, something went wrong.'});
-      });
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -148,17 +170,6 @@ class _PetProfileScreenState extends State<PetProfileScreen> {
         title: const Text('Pet Profile', style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.green,
         centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.chat_bubble),
-            onPressed: () {
-              showModalBottomSheet(
-                context: context,
-                builder: (context) => _buildChatBox(),
-              );
-            },
-          ),
-        ],
       ),
       body: Stack(
         children: [
@@ -173,9 +184,12 @@ class _PetProfileScreenState extends State<PetProfileScreen> {
                     child: CircleAvatar(
                       radius: 80,
                       backgroundImage: _image != null
-                          ? FileImage(_image!) as ImageProvider
-                          : const AssetImage('Assets/köpke.jpg'),
-                      child: _image == null
+                          ? FileImage(_image!)
+                          : (widget.imageUrl != null
+                                  ? NetworkImage(widget.imageUrl!)
+                                  : const AssetImage('assets/default_pet.png'))
+                              as ImageProvider,
+                      child: (_image == null && widget.imageUrl == null)
                           ? const Icon(
                               Icons.camera_alt,
                               size: 40,
@@ -234,7 +248,7 @@ class _PetProfileScreenState extends State<PetProfileScreen> {
         ),
         const SizedBox(height: 16),
         const Text(
-          'About Bella',
+          'About Pet',
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
@@ -370,7 +384,7 @@ class _PetProfileScreenState extends State<PetProfileScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Bella\'s Status',
+          'Pet\'s Status',
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
@@ -500,65 +514,5 @@ class _PetProfileScreenState extends State<PetProfileScreen> {
 
     // Burada ıslık sesi çalınabilir (audioplayers paketi kullanılarak)
     // Örnek: AudioPlayer().play(AssetSource('whistle.mp3'));
-  }
-
-  Widget _buildChatBox() {
-    return Column(
-      children: [
-        Expanded(
-          child: ListView.builder(
-            itemCount: _messages.length,
-            itemBuilder: (context, index) {
-              var message = _messages[index];
-              return Align(
-                alignment: message['sender'] == 'user'
-                    ? Alignment.centerRight
-                    : Alignment.centerLeft,
-                child: Container(
-                  margin:
-                      const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
-                  decoration: BoxDecoration(
-                    color: message['sender'] == 'user'
-                        ? Colors.blue[100]
-                        : Colors.green[100],
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(message['text']!),
-                ),
-              );
-            },
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _messageController,
-                  decoration: InputDecoration(
-                    hintText: 'Type your message...',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.send),
-                onPressed: () {
-                  if (_messageController.text.isNotEmpty) {
-                    _sendMessage(_messageController.text);
-                    _messageController.clear();
-                  }
-                },
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
   }
 }

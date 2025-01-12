@@ -14,10 +14,12 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
+        // Core library desugaring
+        coreLibraryDesugaringEnabled true
     }
 
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_1_8
+        jvmTarget = "1.8"
     }
 
     defaultConfig {
@@ -43,14 +45,14 @@ android {
 flutter {
     source = "../.."
 }
+
 dependencies {
-  // Import the Firebase BoM
-  implementation platform('com.google.firebase:firebase-bom:33.7.0')
-  implementation 'androidx.core:core-ktx:1.9.0' // Eğer yoksa ekleyin
-  coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.3' // Desugaring kütüphanesi
+    // Import the Firebase BoM
+    implementation platform('com.google.firebase:firebase-bom:33.7.0')
+    implementation 'androidx.core:core-ktx:1.9.0' // Eğer yoksa ekleyin
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.3' // Desugaring kütüphanesi
 
-
-  // TODO: Add the dependencies for Firebase products you want to use
-  // When using the BoM, don't specify versions in Firebase dependencies
-  // https://firebase.google.com/docs/android/setup#available-libraries
+    // TODO: Add the dependencies for Firebase products you want to use
+    // When using the BoM, don't specify versions in Firebase dependencies
+    // https://firebase.google.com/docs/android/setup#available-libraries
 }

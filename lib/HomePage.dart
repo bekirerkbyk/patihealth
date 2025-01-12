@@ -9,23 +9,26 @@ import 'map_page.dart';
 import 'shop_page.dart';
 import 'profile_page.dart';
 import 'dart:ui';
+import 'package:firebase_storage/firebase_storage.dart';
 
 class Pet {
   String id;
   String name;
   File? image;
+  String? imageUrl;
   String status;
   DateTime lastActivity;
   bool isActive;
 
-  Pet(
-      {required this.id,
-      required this.name,
-      this.image,
-      this.status = 'Mutlu',
-      DateTime? lastActivity,
-      this.isActive = true})
-      : this.lastActivity = lastActivity ?? DateTime.now();
+  Pet({
+    required this.id,
+    required this.name,
+    this.image,
+    this.imageUrl,
+    this.status = 'Mutlu',
+    DateTime? lastActivity,
+    this.isActive = true,
+  }) : lastActivity = lastActivity ?? DateTime.now();
 }
 
 class HomePage extends StatefulWidget {
@@ -60,12 +63,18 @@ class _HomePageState extends State<HomePage> {
   Future<String?> _fetchProfileImage() async {
     User? currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser != null) {
-      DocumentSnapshot userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(currentUser.uid)
-          .get();
+      try {
+        DocumentSnapshot userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(currentUser.uid)
+            .get();
 
-      return userDoc['profileImageUrl'] as String?;
+        String? profileImageUrl = userDoc.get('profileImageUrl') as String?;
+        return profileImageUrl;
+      } catch (e) {
+        print('Profil resmi yüklenirken hata: $e');
+        return null;
+      }
     }
     return null;
   }
@@ -90,7 +99,7 @@ class _HomePageState extends State<HomePage> {
                 status: doc['status'] as String? ?? 'Mutlu',
                 lastActivity: (doc['lastActivity'] as Timestamp?)?.toDate() ??
                     DateTime.now(),
-                image: doc['imagePath'] != null ? File(doc['imagePath']) : null,
+                imageUrl: doc['imageUrl'] as String?,
               ),
             );
           }
@@ -153,6 +162,7 @@ class _HomePageState extends State<HomePage> {
             petId: newPet.id,
             petName: newPet.name,
             petImage: newPet.image,
+            imageUrl: newPet.imageUrl,
             isNewPet: true,
             onSave: (String name, File? image) {
               _updatePet(newPet.id, name, image);
@@ -171,6 +181,15 @@ class _HomePageState extends State<HomePage> {
     User? currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser != null) {
       try {
+        String? imageUrl;
+        if (pet.image != null) {
+          final storageRef = FirebaseStorage.instance
+              .ref()
+              .child('pet_images/${currentUser.uid}/${pet.id}.jpg');
+          await storageRef.putFile(pet.image!);
+          imageUrl = await storageRef.getDownloadURL();
+        }
+
         await FirebaseFirestore.instance
             .collection('users')
             .doc(currentUser.uid)
@@ -178,7 +197,7 @@ class _HomePageState extends State<HomePage> {
             .doc(pet.id)
             .set({
           'name': pet.name,
-          'imagePath': pet.image?.path,
+          'imageUrl': imageUrl,
           'status': pet.status,
           'lastActivity': Timestamp.fromDate(pet.lastActivity),
           'isActive': pet.isActive,
@@ -199,45 +218,66 @@ class _HomePageState extends State<HomePage> {
   void _deletePetFromFirestore(String petId) async {
     User? currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser != null) {
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(currentUser.uid)
-          .collection('pets')
-          .doc(petId)
-          .delete();
-    }
-  }
-
-  void _updatePet(String petId, String name, File? image) {
-    setState(() {
-      final petIndex = _pets.indexWhere((pet) => pet.id == petId);
-      if (petIndex != -1) {
-        _pets[petIndex].name = name;
-        _pets[petIndex].image = image;
-      }
-    });
-    _updatePetInFirestore(petId, name, image);
-  }
-
-  void _updatePetInFirestore(String petId, String name, File? image) async {
-    User? currentUser = FirebaseAuth.instance.currentUser;
-    if (currentUser != null) {
       try {
-        final updateData = {
-          'name': name,
-          'lastActivity': Timestamp.fromDate(DateTime.now()),
-        };
-
-        if (image != null) {
-          updateData['imagePath'] = image.path;
+        // Önce Storage'dan fotoğrafı sil
+        try {
+          final storageRef = FirebaseStorage.instance
+              .ref()
+              .child('pet_images/${currentUser.uid}/$petId.jpg');
+          await storageRef.delete();
+        } catch (e) {
+          print('Fotoğraf silinirken hata oluştu: $e');
         }
 
+        // Firestore'dan pet dokümanını sil
         await FirebaseFirestore.instance
             .collection('users')
             .doc(currentUser.uid)
             .collection('pets')
             .doc(petId)
-            .update(updateData);
+            .delete();
+      } catch (e) {
+        print('Pet silinirken hata oluştu: $e');
+      }
+    }
+  }
+
+  void _updatePet(String petId, String name, File? image) async {
+    User? currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser != null) {
+      try {
+        String? imageUrl;
+        if (image != null) {
+          // Fotoğrafı Firebase Storage'a yükle
+          final storageRef = FirebaseStorage.instance
+              .ref()
+              .child('pet_images/${currentUser.uid}/$petId.jpg');
+          await storageRef.putFile(image);
+          imageUrl = await storageRef.getDownloadURL();
+        }
+
+        // Firestore'da güncelle
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(currentUser.uid)
+            .collection('pets')
+            .doc(petId)
+            .update({
+          'name': name,
+          if (imageUrl != null) 'imageUrl': imageUrl,
+        });
+
+        // Yerel state'i güncelle
+        setState(() {
+          final petIndex = _pets.indexWhere((pet) => pet.id == petId);
+          if (petIndex != -1) {
+            _pets[petIndex].name = name;
+            _pets[petIndex].image = image;
+            if (imageUrl != null) {
+              _pets[petIndex].imageUrl = imageUrl;
+            }
+          }
+        });
       } catch (e) {
         print('Pet güncellenirken hata oluştu: $e');
       }
@@ -255,7 +295,7 @@ class _HomePageState extends State<HomePage> {
       case 1:
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => ChatScreen()),
+          MaterialPageRoute(builder: (context) => const ChatScreen()),
         );
         break;
       case 2:
@@ -273,7 +313,7 @@ class _HomePageState extends State<HomePage> {
       case 4:
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => ProfilePage()),
+          MaterialPageRoute(builder: (context) => const ProfilePage()),
         );
         break;
     }
@@ -287,7 +327,7 @@ class _HomePageState extends State<HomePage> {
     return InkWell(
       onTap: onTap,
       child: Container(
-        padding: EdgeInsets.all(12),
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
@@ -303,10 +343,10 @@ class _HomePageState extends State<HomePage> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(icon, color: Colors.green, size: 24),
-            SizedBox(height: 4),
+            const SizedBox(height: 4),
             Text(
               label,
-              style: TextStyle(fontSize: 12),
+              style: const TextStyle(fontSize: 12),
             ),
           ],
         ),
@@ -323,10 +363,10 @@ class _HomePageState extends State<HomePage> {
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(icon, color: Colors.white, size: 24),
-        SizedBox(height: 4),
+        const SizedBox(height: 4),
         Text(
           value,
-          style: TextStyle(
+          style: const TextStyle(
             color: Colors.white,
             fontSize: 20,
             fontWeight: FontWeight.bold,
@@ -334,7 +374,7 @@ class _HomePageState extends State<HomePage> {
         ),
         Text(
           label,
-          style: TextStyle(
+          style: const TextStyle(
             color: Colors.white,
             fontSize: 12,
           ),
@@ -380,10 +420,10 @@ class _HomePageState extends State<HomePage> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(icon, color: Colors.green, size: 30),
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               Text(
                 title,
-                style: TextStyle(fontSize: 12),
+                style: const TextStyle(fontSize: 12),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -427,6 +467,7 @@ class _HomePageState extends State<HomePage> {
               petId: pet.id,
               petName: pet.name,
               petImage: pet.image,
+              imageUrl: pet.imageUrl,
               isNewPet: false,
               onDelete: () {
                 _deletePet(pet.id);
@@ -482,9 +523,12 @@ class _HomePageState extends State<HomePage> {
           children: [
             CircleAvatar(
               radius: 35,
-              backgroundImage: pet.image != null
-                  ? FileImage(pet.image!)
-                  : const AssetImage('assets/default_pet.png') as ImageProvider,
+              backgroundImage: pet.imageUrl != null
+                  ? NetworkImage(pet.imageUrl!)
+                  : (pet.image != null
+                          ? FileImage(pet.image!)
+                          : const AssetImage('assets/default_pet.png'))
+                      as ImageProvider,
             ),
             const SizedBox(height: 6),
             Text(
@@ -525,7 +569,7 @@ class _HomePageState extends State<HomePage> {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => ProfilePage()),
+                  MaterialPageRoute(builder: (context) => const ProfilePage()),
                 );
               },
               child: FutureBuilder<String?>(
