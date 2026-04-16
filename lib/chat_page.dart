@@ -32,7 +32,7 @@ class _ChatScreenState extends State<ChatScreen> {
   // Hugging Face API için HTTP isteği yapan fonksiyon
   Future<String> fetchHuggingFaceResponse(String userMessage) async {
     const apiUrl =
-        "api url"; // Model endpoint //https://api-inference.huggingface.co/models/gpt2
+        "api url"; 
     const apiKey = "your api key";
 
     final response = await http.post(
